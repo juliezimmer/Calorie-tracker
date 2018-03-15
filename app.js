@@ -4,7 +4,7 @@
 // ItemCtrl is set equal to IIFE that will automatically run
 const ItemCtrl = (function(){
    // Item Constructor
-   const Item = function(){
+   const Item = function(id, name, calories){
       this.id = id;
       this.name = name;
       this.calories = calories;
@@ -25,6 +25,25 @@ const ItemCtrl = (function(){
       getItems: function () {
          return data.items;
       },
+      addItem: function(name, calories){
+         let ID;
+         // create ID for item
+         if (data.items.length > 0) {
+            ID = data.items[data.items.length -1].id + 1;
+         } else {
+            ID = 0;
+         }
+
+         // calories to number
+         calories = parseInt(calories);
+
+         // Create new item by calling the Item constructor
+         newItem = new Item(ID, name, calories);
+
+         // push newItem to the data structure on line 7 and add to items array
+         data.items.push(newItem);
+         return newItem;
+      },
       logData: function(){
          return data;
       }
@@ -34,8 +53,12 @@ const ItemCtrl = (function(){
 // UI Controller
 // UICtrl is set equal to IIFE that will automatically run
 const UICtrl = (function(){
+   // private variable - can't be accessed directly
    const UISelectors = {
-      itemList: '#item-list'
+      itemList: '#item-list',
+      addBtn: '.add-btn',
+      itemNameInput: '#item-name',
+      itemCaloriesInput: '#item-calories'
    }
    // public method
    return {
@@ -48,14 +71,24 @@ const UICtrl = (function(){
          items.forEach(function(item){
             html += `<li id="item-${item.id}" class="collection-item">
                <strong>${item.name}: </strong> <em> ${item.calories} calories</em>
-                  <a href="#" class="Secondary-content">
+                  <a href="#" class="secondary-content">
                      <i class="edit-item fa fa-pencil"></i>
                   </a>
                </li>`;
          });
          // Inserts list-items
          // appends the list items to the foods list
-         document.querySelector(UISelectors.itemLlist).innerHTML = html;
+         document.querySelector(UISelectors.itemList).innerHTML = html;
+      },
+      getItemInput: function (){
+         return {
+            name: document.querySelector(UISelectors.itemNameInput).value,
+            calories: document.querySelector(UISelectors.itemCaloriesInput).value
+         }
+      },
+      // get selectors
+      getSelectors: function(){
+         return UISelectors;
       }
    }
 })();
@@ -63,33 +96,36 @@ const UICtrl = (function(){
 // App Controller - main controller. The other controllers will be inserted into the main or app controller
 // App is set equal to IIFE that will automatically run
 const App = (function(ItemCtrl, UICtrl){
-   console.log(ItemCtrl.logData());
-   /* logged to the console:
-      {items: Array(3), currentItem: null, totalCalories: 0}
-         currentItem: null
-         items:(3) [{…}, {…}, {…}]
-            0:{id: 0, name: "Steak dinner", calories: 1200}
-            1:{id: 1, name: "cookie", calories: 300}
-            2:{id: 2, name: "wine", calories: 200}
-         totalCalories: null
-         __proto__:Object
-   */
+   // Load Event Listeners -  called inside init
+   const loadEventListeners = function (){
+      // Get UI Selectors
+      const UISelectors = UICtrl.getSelectors();
+      // Add item event
+      document.querySelector(UISelectors.addBtn).addEventListener('click', itemAddSubmit);
+   }
 
+   // Add item submit
+   const itemAddSubmit = function (e){
+      // Get form input from UI Controller
+      const input = UICtrl.getItemInput();
+      // chek for name and calorie input
+      if(input.name !== '' && input.calories !== ''){ // if both meal and calories input have text 
+         // Add item
+         const newItem = ItemCtrl.addItem(input.name, input.calories);
+      }
+      e.preventDefault();
+   }      
+   // public method
    return {
       init: function (){
          // Fetch items from data structur
          const items = ItemCtrl.getItems();
-         console.log(items);
-         /* logged to the console:
-            (3) [{…}, {…}, {…}]
-               0:{id: 0, name: "Steak dinner", calories: 1200}
-               1:{id: 1, name: "cookie", calories: 300}
-               2:{id: 2, name: "wine", calories: 200}
-               length: 3
-         */
 
          // Populate ul with the items; pass in items that were fetched with the getItems()
          UICtrl.populateItemList(items);
+
+         // Load event listeners
+         loadEventListeners();
       }
    }
 })(ItemCtrl, UICtrl);
