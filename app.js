@@ -1,7 +1,6 @@
 // Storage Controller
 
-// Item Controller
-// ItemCtrl is set equal to IIFE that will automatically run
+// Item Controller -  and IIFE that automatically runs
 const ItemCtrl = (function(){
    // Item Constructor
    const Item = function(id, name, calories){
@@ -9,13 +8,12 @@ const ItemCtrl = (function(){
       this.name = name;
       this.calories = calories;
    }
-
    // Data Structure or State
    const data = { 
-      items: [ // this is an array of objects
-         { id:0, name:'Steak dinner', calories: 1200},
-         { id:1, name: 'cookie', calories: 300 },
-         { id:2, name: 'wine', calories: 200 }
+      items: [ 
+         // { id:0, name:'Steak dinner', calories: 1200},
+         // { id:1, name: 'cookie', calories: 300 },
+         // { id:2, name: 'wine', calories: 200 }
       ],
       currentItem: null,
       totalCalories: 0
@@ -27,20 +25,19 @@ const ItemCtrl = (function(){
       },
       addItem: function(name, calories){
          let ID;
-         // create ID for item
+         // create ID for added item
          if (data.items.length > 0) {
             ID = data.items[data.items.length -1].id + 1;
          } else {
             ID = 0;
          }
-
-         // calories to number
+         // calories need to be parsed to a number 
          calories = parseInt(calories);
 
-         // Create new item by calling the Item constructor
+         // Create a new item by calling the Item constructor
          newItem = new Item(ID, name, calories);
 
-         // push newItem to the data structure on line 7 and add to items array
+         // push newItem to the data structure; add to items array
          data.items.push(newItem);
          return newItem;
       },
@@ -86,15 +83,37 @@ const UICtrl = (function(){
             calories: document.querySelector(UISelectors.itemCaloriesInput).value
          }
       },
-      // get selectors
+      addListItem: function(item) {
+         // Show the list
+         document.querySelector(UISelectors.itemList).style.diaplay = 'block';
+         // Create <li> element using document.createElement() method
+         const li = document.createElement('li');
+         // Add a class to the newly created <li>
+         li.className = 'collection-item';
+         // Add an ID to the newly created <li>,
+         li.id = `item-${item.id}`;
+         // Add HTML
+         li.innerHTML = `<strong>${item.name}: </strong> <em> ${item.calories} calories</em>
+         <a href="#" class="secondary-content">
+            <i class="edit-item fa fa-pencil"></i>
+         </a>`;
+         // Insert item
+         document.querySelector(UISelectors.itemList).insertAdjacentElement('beforeend', li)
+      },
+      clearInput: function(){
+         document.querySelector(UISelectors.itemNameInput).value = '';
+         document.querySelector(UISelectors.itemCaloriesInput).value = '';
+      },
+      hideList: function (){
+         document.querySelector(UISelectors.itemList).style.display = 'none';
+      },
       getSelectors: function(){
          return UISelectors;
       }
    }
 })();
 
-// App Controller - main controller. The other controllers will be inserted into the main or app controller
-// App is set equal to IIFE that will automatically run
+// App Controller - main controller. The other controllers are inserted into this one.  App is set equal to IIFE that will automatically run.
 const App = (function(ItemCtrl, UICtrl){
    // Load Event Listeners -  called inside init
    const loadEventListeners = function (){
@@ -104,7 +123,7 @@ const App = (function(ItemCtrl, UICtrl){
       document.querySelector(UISelectors.addBtn).addEventListener('click', itemAddSubmit);
    }
 
-   // Add item submit
+   // Add item submit  -  this adds a new item entered into the application. The item is put into the variable/const, newItem. 
    const itemAddSubmit = function (e){
       // Get form input from UI Controller
       const input = UICtrl.getItemInput();
@@ -112,18 +131,26 @@ const App = (function(ItemCtrl, UICtrl){
       if(input.name !== '' && input.calories !== ''){ // if both meal and calories input have text 
          // Add item
          const newItem = ItemCtrl.addItem(input.name, input.calories);
+         // Add item to DOM list using the addListItem method in the UI Controller.
+         UICtrl.addListItem(newItem);
+
+         // Clear Fields
+         UICtrl.clearInput();
+
       }
       e.preventDefault();
    }      
    // public method
    return {
       init: function (){
-         // Fetch items from data structur
+         // Fetch items from data structure
          const items = ItemCtrl.getItems();
-
-         // Populate ul with the items; pass in items that were fetched with the getItems()
-         UICtrl.populateItemList(items);
-
+         // Check if any items
+         if (items.length === 0){ // there are no items in the list
+            UICtrl.hideList();
+         } else { // populate the items in the list
+            UICtrl.populateItemList(items);
+         }
          // Load event listeners
          loadEventListeners();
       }
