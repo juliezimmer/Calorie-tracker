@@ -1,4 +1,63 @@
 // Storage Controller
+const StorageCtrl = (function (){
+   // public methods
+   return {
+      storeItem: function(item){ // localStorage holds data in JSON like format
+         let items;
+         // check if any items in storage
+         if(localStorage.getItem('items') === null){ // if the is nothing in localStorage
+            items = [];
+            // push new item to the empty items array
+            items.push(item);
+            // set the new items array to localStorage as items.
+            // the item has to be stringified to be stored in localStorage
+            localStorage.setItem('items', JSON.stringify(items));
+         } else { // if there are already items in storage, get the items, which will have to be parsed as they are stored in JSON format. This turns the items into an object so that the new items can be added. 
+            items = JSON.parse(localStorage.getItem('items'));
+
+            // push new item to the array of items
+            items.push(item);
+
+            // Reset local storage with t he new item added and stringified
+            localStorage.setItem('items', JSON.stringify(items));
+         }
+      },
+      // method to get items from localStorage
+      getItemsFromStorage: function (){
+         let items; 
+         if(localStorage.getItem('items') === null){
+            items = [];
+         } else {
+            items = JSON.parse(localStorage.getItem('items'));
+         }
+         return items;
+      },
+      updateItemStorage: function (updatedItem){
+         let items = JSON.parse(localStorage.getItems('items'));
+         // loop through items from storage using forEach
+         items.forEach(function(item, index){
+            if(updatedItem.id === item.id){
+               items.splice(index, 1, updatedItem);
+            }
+         });
+         localStorage.setItem('items', JSON.stringify(items));
+      },
+      deleteItemFromStorage: function(id){
+         let items = JSON.parse(localStorage.getItems('items'));
+         
+         items.forEach(function(item, index){
+            if(id === item.id){
+               items.splice(index, 1);
+            }
+         });
+         // reset local Storage
+         localStorage.setItem('items', JSON.stringify(items));
+      },
+      clearItemsFromStorage: function(){
+         localstorage.removeItem('items');
+      }
+   }
+})();
 
 // Item Controller -  and IIFE that automatically runs
 const ItemCtrl = (function(){
@@ -10,11 +69,7 @@ const ItemCtrl = (function(){
    }
    // Data Structure or State
    const data = { 
-      items: [ 
-         // { id:0, name:'Steak dinner', calories: 1200},
-         // { id:1, name: 'cookie', calories: 300 },
-         // { id:2, name: 'wine', calories: 200 }
-      ],
+      items: StorageCtrl.getItemsFromStorage(),
       currentItem: null,
       totalCalories: 0
    }
@@ -232,7 +287,7 @@ const UICtrl = (function(){
 })();
 
 // App Controller - main controller. The other controllers are inserted into this one.  App is set equal to IIFE that will automatically run.
-const App = (function(ItemCtrl, UICtrl){
+const App = (function(ItemCtrl, StorageCtrl, UICtrl){
    // Load Event Listeners -  called inside init
    const loadEventListeners = function (){
       // Get UI Selectors
@@ -284,6 +339,9 @@ const App = (function(ItemCtrl, UICtrl){
          // Add total calories to the DOM
          UICtrl.showTotalCalories(totalCalories);
 
+         // Store in localStorage
+         StorageCtrl.storeItem(newItem); // newItem is coming from the const newItem on line 285.
+         
          // Clear Fields
          UICtrl.clearInput();
       }
@@ -332,7 +390,10 @@ const App = (function(ItemCtrl, UICtrl){
       const totalCalories = ItemCtrl.getTotalCalories(); 
       // Add total calories to the DOM
       UICtrl.showTotalCalories(totalCalories);
-
+      
+      // Update local storage
+      StorageCtrl.updateItemStorage(updatedItem);
+      
       UICtrl.clearEditState();
 
       e.preventDefault();
@@ -354,6 +415,11 @@ const App = (function(ItemCtrl, UICtrl){
       // Add total calories to UI
       UICtrl.showTotalCalories(totalCalories);
 
+      // Delete from local Storage
+      StorageCtrl.deleteItemFromStorage(currentItem.id);
+
+      
+
       UICtrl.clearEditState();
 
       e.preventDefault();
@@ -371,6 +437,9 @@ const App = (function(ItemCtrl, UICtrl){
 
       // remove from UI
       UICtrl.removeItems();
+
+      // clear from local storage
+      StorageCtrl.clearItemsFromStorage();
 
       // Hide UL
       UICtrl.hideList();
@@ -399,7 +468,7 @@ const App = (function(ItemCtrl, UICtrl){
          loadEventListeners();
       }
    }
-})(ItemCtrl, UICtrl);
+})(ItemCtrl, StorageCtrl, UICtrl);
 
 // Initialize App
 App.init();
